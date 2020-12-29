@@ -1,0 +1,27 @@
+plugins {
+    id 'org.springframework.boot' version '2.3.5.RELEASE'
+    id 'application'
+    id 'io.freefair.lombok'
+}
+
+sourceCompatibility = JavaVersion.VERSION_14
+targetCompatibility = JavaVersion.VERSION_14
+version '0.1'
+
+final MAIN_CLASS_NAME = 'org.sess.telegram.client.App'
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+
+application {
+    mainClassName MAIN_CLASS_NAME
+}
+
+test {
+    useJUnitPlatform()
+}

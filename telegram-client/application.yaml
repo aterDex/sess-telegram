@@ -1,0 +1,10 @@
+---
+server:
+  port: 18200
+
+telegram:
+  bot:
+    id:
+
+logging:
+  config: logback.xml
