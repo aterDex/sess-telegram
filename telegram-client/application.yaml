@@ -2,9 +2,15 @@
 server:
   port: 18200
 
+spring:
+  profiles:
+    active: TelegramSourcePoller
+
 telegram:
   bot:
     id:
+    poller:
+      timeout: 30
 
 logging:
   config: logback.xml
