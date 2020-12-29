@@ -9,6 +9,7 @@ spring:
 telegram:
   bot:
     id:
+    template: https://api.telegram.org/bot{botId}/{method}
     poller:
       timeout: 30
 

@@ -11,14 +11,15 @@ import java.util.Map;
 public class UriProviderImpl implements UriProvider {
 
     private final String botId;
+    private final String template;
 
-    public UriProviderImpl(@Value("${telegram.bot.id}") String botId) {
+    public UriProviderImpl(@Value("${telegram.bot.id}") String botId, @Value("${telegram.bot.template}")String template) {
         this.botId = botId;
+        this.template = template;
     }
 
     @Override
     public URI createUri(String method) {
-        String uriTemplate = "https://api.telegram.org/bot{botId}/{method}";
-        return UriComponentsBuilder.fromUriString(uriTemplate).build(Map.of("botId", botId, "method", method));
+        return UriComponentsBuilder.fromUriString(template).build(Map.of("botId", botId, "method", method));
     }
 }
