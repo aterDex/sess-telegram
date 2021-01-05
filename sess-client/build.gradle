@@ -7,8 +7,11 @@ sourceCompatibility = JavaVersion.VERSION_14
 targetCompatibility = JavaVersion.VERSION_14
 version '0.1'
 
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation project(':telegram-client')
 
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'

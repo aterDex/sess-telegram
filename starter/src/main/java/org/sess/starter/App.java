@@ -1,10 +1,13 @@
-package org.sess.telegram.client;
+package org.sess.starter;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackageClasses = {
+        org.sess.telegram.client.Marker.class,
+        org.sess.client.Marker.class
+})
 @EnableAsync
 public class App {
 

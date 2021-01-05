@@ -1,4 +1,4 @@
-package org.sess.telegram.client.api;
+package org.sess.telegram.client.api.pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

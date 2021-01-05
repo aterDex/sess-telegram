@@ -1,2 +1,4 @@
 rootProject.name = 'telegram'
 include 'telegram-client'
+include 'sess-client'
+include 'starter'
