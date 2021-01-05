@@ -6,4 +6,5 @@ import lombok.Data;
 public class Update {
 
     private int update_id;
+    private Message message;
 }

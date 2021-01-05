@@ -13,7 +13,7 @@ public class UriProviderImpl implements UriProvider {
     private final String botId;
     private final String template;
 
-    public UriProviderImpl(@Value("${telegram.bot.id}") String botId, @Value("${telegram.bot.template}")String template) {
+    public UriProviderImpl(@Value("${telegram.bot.id}") String botId, @Value("${telegram.bot.template}") String template) {
         this.botId = botId;
         this.template = template;
     }
