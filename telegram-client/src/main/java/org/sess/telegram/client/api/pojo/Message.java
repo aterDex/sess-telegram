@@ -14,7 +14,7 @@ public class Message {
     /**
      * Unique message identifier inside this chat
      */
-    private int message_id;
+    private long message_id;
 
     /**
      * Optional. Sender, empty for messages sent to channels

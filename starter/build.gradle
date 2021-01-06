@@ -1,5 +1,5 @@
 plugins {
-    id 'org.springframework.boot' version '2.3.5.RELEASE'
+    id 'org.springframework.boot' version '2.4.1'
     id 'application'
     id 'io.freefair.lombok'
 }
@@ -12,6 +12,7 @@ final MAIN_CLASS_NAME = 'org.sess.starter.App'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
     implementation project(':telegram-client')
     implementation project(':sess-client')
