@@ -13,5 +13,9 @@ telegram:
     poller:
       timeout: 30
 
+geo:
+  nominatim:
+    url: https://nominatim.openstreetmap.org
+
 logging:
   config: logback.xml

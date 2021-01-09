@@ -16,6 +16,7 @@ public class MessageTextResolverRus implements MessageTextResolver {
                 , entry("hello_and_register_get_sex", "Скажи какого ты пола?")
                 , entry("hello_and_register_get_birthday", "Дата рождения? (Мы некому не скажем)")
                 , entry("hello_and_register_get_city", "Город в котором ты хочешь бегать?")
+                , entry("hello_and_register_get_city_button", "Отправить гео код")
                 , entry("hello_and_register_check", "Почти готово! Проверь данные и так:\r\nник: %1$s\r\nemail: %2$s\r\nгород: %3$s\r\nпол: %4$s\r\nдень рождения: %5$s\r\nВсе верно?")
                 , entry("sex_men", "М")
                 , entry("sex_women", "Ж")

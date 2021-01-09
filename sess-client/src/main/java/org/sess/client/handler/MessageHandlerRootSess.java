@@ -26,7 +26,7 @@ public class MessageHandlerRootSess implements MessageHandler {
                             messageTextResolver.resolveTextById(msg.getFrom().getLanguage_code(), "in_progress"))
             );
         } else {
-            context.getMessageHandlerStore().addLastHandler(msg.getChat().getId(), new MessageHandlerNewUser(sessTemplate, messageTextResolver));
+            context.getMessageHandlerStore().addLastHandler(msg.getChat().getId(), context.getMessageHandlerStore().getMessageHandler("messageHandlerNewUser"));
             context.getMessageHandlerStore().handler(msg);
         }
     }
