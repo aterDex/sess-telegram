@@ -21,9 +21,10 @@ public class MessageHandlerRootSess implements MessageHandler {
     @Override
     public void handler(Message msg, MessageHandlerContext context) {
         if (sessTemplate.isRegisterUser(msg.getChat().getId())) {
-            MessageHandlerUtils.sendText(msg,
-                    context.getTelegramTemplate(),
-                    messageTextResolver.resolveTextById(msg.getFrom().getLanguage_code(), "in_progress"));
+            context.getTelegramTemplate().sendMessage(
+                    TelegramMessageUtils.createAnswer(msg,
+                            messageTextResolver.resolveTextById(msg.getFrom().getLanguage_code(), "in_progress"))
+            );
         } else {
             context.getMessageHandlerStore().addLastHandler(msg.getChat().getId(), new MessageHandlerNewUser(sessTemplate, messageTextResolver));
             context.getMessageHandlerStore().handler(msg);

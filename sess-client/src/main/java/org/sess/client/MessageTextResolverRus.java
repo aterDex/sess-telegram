@@ -3,28 +3,35 @@ package org.sess.client;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import static java.util.Map.*;
+
 
 @Component
 public class MessageTextResolverRus implements MessageTextResolver {
 
-    private static Map<String, String> dictionary = Map.of("in_progress", "Функционал в процессе разработки."
-            ,"hello_and_register", "Привет %1$s! Я бот sess. И я помогу найти тебе компанию для пробежки. Но в начале давай зарегистрируем тебя. Скажи как нам к тебе обращаться в дальнейшем?"
-            , "hello_and_register_get_email", "А сейчас напиши свой Email, чтобы стать ближе)"
-            ,"hello_and_register_get_sex", "Скажи какого ты пола?"
-            ,"hello_and_register_get_birthday", "Дата рождения? (Мы некому не скажем)"
-            , "hello_and_register_get_city", "Город в котором ты хочешь бегать?"
-            , "hello_and_register_check", "Почти готово! Проверь данные и так:\r\n" +
-                    "ник: %1$s\r\n" +
-                    "email: %2$s\r\n" +
-                    "город: %3$s\r\n" +
-                    "пол: %4$s\r\n" +
-                    "день рождения: %5$s\r\n" +
-                    "Все верно?"
-    );
+    static {
+        dictionary = ofEntries(entry("in_progress", "Функционал в процессе разработки.")
+                , entry("hello_and_register", "Привет %1$s! Я бот sess. И я помогу найти тебе компанию для пробежки. Но в начале давай зарегистрируем тебя. Скажи как нам к тебе обращаться в дальнейшем?")
+                , entry("hello_and_register_get_email", "А сейчас напиши свой Email, чтобы стать ближе)")
+                , entry("hello_and_register_get_sex", "Скажи какого ты пола?")
+                , entry("hello_and_register_get_birthday", "Дата рождения? (Мы некому не скажем)")
+                , entry("hello_and_register_get_city", "Город в котором ты хочешь бегать?")
+                , entry("hello_and_register_check", "Почти готово! Проверь данные и так:\r\nник: %1$s\r\nemail: %2$s\r\nгород: %3$s\r\nпол: %4$s\r\nдень рождения: %5$s\r\nВсе верно?")
+                , entry("sex_men", "М")
+                , entry("sex_women", "Ж")
+                , entry("yes", "Да")
+                , entry("no", "Нет")
+                , entry("hello_and_register_ok", "Вы зарегистрированы")
+                , entry("hello_and_register_error", "Ошибка при регистрации")
+                , entry("hello_and_register_abort", "Регистрация отменена")
+        );
+    }
+
+    private static final Map<String, String> dictionary;
 
     @Override
     public String resolveTextById(String locale, String textId) {
-        return dictionary.get(textId);
+        return dictionary.getOrDefault(textId, "");
     }
 
     @Override

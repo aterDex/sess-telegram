@@ -1,15 +1,14 @@
 package org.sess.telegram.client.api.pojo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@Builder
-public class MessageOut {
+@AllArgsConstructor
+public class ReplyKeyboardRemove {
 
-    private String chat_id;
-    private String text;
+    private boolean remove_keyboard;
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Object reply_markup;
+    private Boolean selective;
 }
