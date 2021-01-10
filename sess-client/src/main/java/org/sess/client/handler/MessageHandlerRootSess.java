@@ -19,7 +19,7 @@ public class MessageHandlerRootSess implements MessageHandler {
     }
 
     @Override
-    public void handler(Message msg, MessageHandlerContext context) {
+    public boolean handler(Message msg, MessageHandlerContext context) {
         if (sessTemplate.isRegisterUser(msg.getChat().getId())) {
             context.getTelegramTemplate().sendMessage(
                     TelegramMessageUtils.createAnswer(msg,
@@ -29,5 +29,6 @@ public class MessageHandlerRootSess implements MessageHandler {
             context.getMessageHandlerStore().addLastHandler(msg.getChat().getId(), context.getMessageHandlerStore().getMessageHandler("messageHandlerNewUser"));
             context.getMessageHandlerStore().handler(msg);
         }
+        return true;
     }
 }

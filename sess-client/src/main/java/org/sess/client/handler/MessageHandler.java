@@ -4,5 +4,11 @@ import org.sess.telegram.client.api.pojo.Message;
 
 public interface MessageHandler {
 
-    void handler(Message msg, MessageHandlerContext context);
+    /**
+     * MessageHandler
+     * @param msg message from telegram
+     * @param context context for message
+     * @return true - message Handler Ok, false - skip message
+     */
+    boolean handler(Message msg, MessageHandlerContext context);
 }

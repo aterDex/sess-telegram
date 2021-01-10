@@ -34,10 +34,10 @@ public class MessageHandlerNewUser implements MessageHandler {
     }
 
     @Override
-    public void handler(Message msg, MessageHandlerContext context) {
+    public boolean handler(Message msg, MessageHandlerContext context) {
         try {
             switch (currentStep) {
-                case FIRST:
+                case FIRST -> {
                     context.getTelegramTemplate().sendMessage(
                             TelegramMessageUtils.createAnswer(msg,
                                     messageTextResolver.resolveTextById(
@@ -46,8 +46,8 @@ public class MessageHandlerNewUser implements MessageHandler {
                                     ))
                     );
                     currentStep = Steps.NAME;
-                    break;
-                case NAME:
+                }
+                case NAME -> {
                     userBuilder.nickname(msg.getText());
                     context.getTelegramTemplate().sendMessage(
                             TelegramMessageUtils.createAnswer(msg,
@@ -57,8 +57,8 @@ public class MessageHandlerNewUser implements MessageHandler {
                                     ))
                     );
                     currentStep = Steps.EMAIL;
-                    break;
-                case EMAIL:
+                }
+                case EMAIL -> {
                     userBuilder.email(msg.getText());
                     context.getTelegramTemplate().sendMessage(
                             TelegramMessageUtils.createAnswer(msg,
@@ -81,8 +81,8 @@ public class MessageHandlerNewUser implements MessageHandler {
                                                     .build()))
                     );
                     currentStep = Steps.SEX;
-                    break;
-                case SEX:
+                }
+                case SEX -> {
                     userBuilder.sex(Sex.MALE);
                     context.getTelegramTemplate().sendMessage(
                             TelegramMessageUtils.createAnswer(msg,
@@ -92,8 +92,8 @@ public class MessageHandlerNewUser implements MessageHandler {
                                     ))
                     );
                     currentStep = Steps.BIRTHDAY;
-                    break;
-                case BIRTHDAY:
+                }
+                case BIRTHDAY -> {
                     userBuilder.birthday(LocalDateTime.now());
                     context.getTelegramTemplate().sendMessage(
                             TelegramMessageUtils.createAnswer(msg,
@@ -107,8 +107,8 @@ public class MessageHandlerNewUser implements MessageHandler {
                                             )).request_location(true).build())
                             ));
                     currentStep = Steps.CITY;
-                    break;
-                case CITY:
+                }
+                case CITY -> {
                     userBuilder.city(
                             geoResolver.resolveCity(msg.getFrom().getLanguage_code(), msg.getLocation().getLatitude(), msg.getLocation().getLongitude())
                     );
@@ -141,8 +141,8 @@ public class MessageHandlerNewUser implements MessageHandler {
                                     ))
                     );
                     currentStep = Steps.CHECK;
-                    break;
-                case CHECK:
+                }
+                case CHECK -> {
                     String okAns = messageTextResolver.resolveTextById(
                             msg.getFrom().getLanguage_code(),
                             "yes"
@@ -172,11 +172,12 @@ public class MessageHandlerNewUser implements MessageHandler {
                                 )));
                     }
                     context.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
-                    break;
+                }
             }
         } catch (Exception e) {
             log.error("", e);
         }
+        return true;
     }
 
     private enum Steps {

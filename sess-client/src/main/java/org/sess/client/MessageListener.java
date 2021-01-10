@@ -19,6 +19,8 @@ public class MessageListener implements ApplicationListener<MessageAsSpringEvent
     @Override
     public void onApplicationEvent(MessageAsSpringEvent event) {
         log.info("--- {}", event.getUpdate());
-        messageHandlerStore.handler(event.getUpdate().getMessage());
+        if (event.getUpdate().getMessage() != null) {
+            messageHandlerStore.handler(event.getUpdate().getMessage());
+        }
     }
 }
