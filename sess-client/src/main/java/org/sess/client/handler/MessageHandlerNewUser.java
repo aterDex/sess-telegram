@@ -11,9 +11,16 @@ import org.sess.telegram.client.api.pojo.Message;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.statemachine.StateContext;
+import org.springframework.statemachine.StateMachine;
+import org.springframework.statemachine.action.Action;
+import org.springframework.statemachine.config.StateMachineBuilder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -21,166 +28,312 @@ import java.time.LocalDateTime;
 @Qualifier("messageHandlerNewUser")
 public class MessageHandlerNewUser implements MessageHandler {
 
+    public static final String KEYBOARD_INFO = "KeyboardInfo";
+    public static final String MSG = "msg";
+    public static final String MHC = "mhc";
+
     private final SessTemplate sessTemplate;
     private final MessageTextResolver messageTextResolver;
-    private Steps currentStep = Steps.FIRST;
     private final TelegramUser.TelegramUserBuilder userBuilder = TelegramUser.builder();
     private final GeoResolver geoResolver;
+    private final StateMachine<Steps, Event> stateMachine;
 
-    public MessageHandlerNewUser(SessTemplate sessTemplate, MessageTextResolver messageTextResolver, GeoResolver geoResolver) {
+    public MessageHandlerNewUser(SessTemplate sessTemplate, MessageTextResolver messageTextResolver, GeoResolver geoResolver) throws Exception {
         this.sessTemplate = sessTemplate;
         this.messageTextResolver = messageTextResolver;
         this.geoResolver = geoResolver;
+        this.stateMachine = buildMachine();
+        this.stateMachine.start();
     }
 
     @Override
     public boolean handler(Message msg, MessageHandlerContext context) {
         try {
-            switch (currentStep) {
-                case FIRST -> {
-                    context.getTelegramTemplate().sendMessage(
-                            TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register", msg.getFrom().getFirst_name()
-                                    ))
-                    );
-                    currentStep = Steps.NAME;
-                }
-                case NAME -> {
-                    userBuilder.nickname(msg.getText());
-                    context.getTelegramTemplate().sendMessage(
-                            TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_get_email"
-                                    ))
-                    );
-                    currentStep = Steps.EMAIL;
-                }
-                case EMAIL -> {
-                    userBuilder.email(msg.getText());
-                    context.getTelegramTemplate().sendMessage(
-                            TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_get_sex"
-                                    ), TelegramMessageUtils.createKeyBoard(
-                                            true,
-                                            KeyboardButton.builder()
-                                                    .text(messageTextResolver.resolveTextById(
-                                                            msg.getFrom().getLanguage_code(),
-                                                            "sex_men"
-                                                    ))
-                                                    .build(),
-                                            KeyboardButton.builder()
-                                                    .text(messageTextResolver.resolveTextById(
-                                                            msg.getFrom().getLanguage_code(),
-                                                            "sex_women"
-                                                    ))
-                                                    .build()))
-                    );
-                    currentStep = Steps.SEX;
-                }
-                case SEX -> {
-                    userBuilder.sex(Sex.MALE);
-                    context.getTelegramTemplate().sendMessage(
-                            TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_get_birthday"
-                                    ))
-                    );
-                    currentStep = Steps.BIRTHDAY;
-                }
-                case BIRTHDAY -> {
-                    userBuilder.birthday(LocalDateTime.now());
-                    context.getTelegramTemplate().sendMessage(
-                            TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_get_city"
-                                    ), TelegramMessageUtils.createKeyBoard(true,
-                                            KeyboardButton.builder().text(messageTextResolver.resolveTextById(
-                                                    msg.getFrom().getLanguage_code(),
-                                                    "hello_and_register_get_city_button"
-                                            )).request_location(true).build())
-                            ));
-                    currentStep = Steps.CITY;
-                }
-                case CITY -> {
-                    userBuilder.city(
-                            geoResolver.resolveCity(msg.getFrom().getLanguage_code(), msg.getLocation().getLatitude(), msg.getLocation().getLongitude())
-                    );
-                    TelegramUser user = userBuilder.build();
-                    context.getTelegramTemplate().sendMessage(
-                            TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_check",
-                                            user.getNickname(),
-                                            user.getEmail(),
-                                            user.getCity().getAddress(),
-                                            user.getSex().toString(),
-                                            user.getBirthday().toString()
-                                    ),
-                                    TelegramMessageUtils.createKeyBoard(
-                                            true,
-                                            KeyboardButton.builder()
-                                                    .text(messageTextResolver.resolveTextById(
-                                                            msg.getFrom().getLanguage_code(),
-                                                            "yes"
-                                                    ))
-                                                    .build(),
-                                            KeyboardButton.builder()
-                                                    .text(messageTextResolver.resolveTextById(
-                                                            msg.getFrom().getLanguage_code(),
-                                                            "no"
-                                                    ))
-                                                    .build()
-                                    ))
-                    );
-                    currentStep = Steps.CHECK;
-                }
-                case CHECK -> {
-                    String okAns = messageTextResolver.resolveTextById(
-                            msg.getFrom().getLanguage_code(),
-                            "yes"
-                    );
-                    if (okAns.equalsIgnoreCase(msg.getText())) {
-                        try {
-                            userBuilder.telegramId(msg.getChat().getId());
-                            sessTemplate.createUser(userBuilder.build());
-                            context.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_ok"
-                                    )));
-                        } catch (Exception e) {
-                            log.error("", e);
-                            context.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
-                                    messageTextResolver.resolveTextById(
-                                            msg.getFrom().getLanguage_code(),
-                                            "hello_and_register_error"
-                                    )));
-                        }
-                    } else {
-                        context.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
-                                messageTextResolver.resolveTextById(
-                                        msg.getFrom().getLanguage_code(),
-                                        "hello_and_register_abort"
-                                )));
-                    }
-                    context.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
-                }
-            }
+            stateMachine.sendEvent(MessageBuilder
+                    .withPayload(Event.DATA)
+                    .setHeader(MSG, msg)
+                    .setHeader(MHC, context)
+                    .build());
         } catch (Exception e) {
             log.error("", e);
         }
         return true;
     }
 
+    private StateMachine<Steps, Event> buildMachine() throws Exception {
+        StateMachineBuilder.Builder<Steps, Event> builder = StateMachineBuilder.builder();
+
+        builder.configureStates()
+                .withStates()
+                .initial(Steps.FIRST)
+                .states(EnumSet.allOf(Steps.class));
+        builder.configureTransitions()
+                .withExternal().source(Steps.FIRST).target(Steps.HELLO).event(Event.DATA)
+                .action(this::hello).and()
+
+                .withExternal().source(Steps.HELLO).target(Steps.REQ_NAME).event(Event.NEXT)
+                .action(this::requestName).and()
+                .withExternal().source(Steps.REQ_NAME).target(Steps.RES_NAME).event(Event.DATA)
+                .action(this::responseName).and()
+
+                .withExternal().source(Steps.RES_NAME).target(Steps.REQ_EMAIL).event(Event.NEXT)
+                .action(this::requestEmail).and()
+                .withExternal().source(Steps.REQ_EMAIL).target(Steps.RES_EMAIL).event(Event.DATA)
+                .action(this::responseEmail).and()
+
+                .withExternal().source(Steps.RES_EMAIL).target(Steps.REQ_SEX).event(Event.NEXT)
+                .action(this::requestSex).and()
+                .withExternal().source(Steps.REQ_SEX).target(Steps.RES_SEX).event(Event.DATA)
+                .action(this::responseSex).and()
+
+                .withExternal().source(Steps.RES_SEX).target(Steps.REQ_BIRTHDAY).event(Event.NEXT)
+                .action(this::requestBirthday).and()
+                .withExternal().source(Steps.REQ_BIRTHDAY).target(Steps.RES_BIRTHDAY).event(Event.DATA)
+                .action(this::responseBirthday).and()
+
+                .withExternal().source(Steps.RES_BIRTHDAY).target(Steps.REQ_CITY).event(Event.NEXT)
+                .action(this::requestCity).and()
+                .withExternal().source(Steps.REQ_CITY).target(Steps.RES_CITY).event(Event.DATA)
+                .action(this::responseCity).and()
+
+                .withExternal().source(Steps.RES_CITY).target(Steps.REQ_CHECK).event(Event.NEXT)
+                .action(this::requestCheck).and()
+                .withExternal().source(Steps.REQ_CHECK).target(Steps.RES_CHECK).event(Event.DATA)
+                .action(this::responseCheck).and()
+
+                .withExternal().source(Steps.REQ_CHECK).target(Steps.REQ_NAME).event(Event.NEXT)
+                .action(new Action<Steps, Event>() {
+                    @Override
+                    public void execute(StateContext<Steps, Event> context) {
+                        log.info("----------------------------");
+                    }
+                }).and()
+        ;
+        return builder.build();
+    }
+
+    private void next(Event event, StateContext<Steps, Event> stepsEventStateContext) {
+        stepsEventStateContext.getStateMachine().sendEvent(
+                MessageBuilder.createMessage(event, stepsEventStateContext.getMessageHeaders()));
+    }
+
+    private void hello(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                msg.getFrom().getLanguage_code(),
+                                "hello_and_register", msg.getFrom().getFirst_name()
+                        ))
+        );
+        next(Event.NEXT, stepsEventStateContext);
+    }
+
+    private void responseName(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        userBuilder.nickname(msg.getText());
+        next(Event.NEXT, stepsEventStateContext);
+    }
+
+    private void responseEmail(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        userBuilder.email(msg.getText());
+        next(Event.NEXT, stepsEventStateContext);
+    }
+
+    private void responseBirthday(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        userBuilder.birthday(LocalDateTime.now());
+        next(Event.NEXT, stepsEventStateContext);
+    }
+
+    private void responseCity(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        userBuilder.city(
+                geoResolver.resolveCity(msg.getFrom().getLanguage_code()
+                        , msg.getLocation().getLatitude()
+                        , msg.getLocation().getLongitude())
+        );
+        next(Event.NEXT, stepsEventStateContext);
+    }
+
+    private void responseCheck(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        var languageCode = msg.getFrom().getLanguage_code();
+        var keyboardInfo = (Map<String, Integer>) stepsEventStateContext
+                .getStateMachine().getExtendedState()
+                .getVariables().get(KEYBOARD_INFO);
+
+        switch (keyboardInfo.getOrDefault(msg.getText(), 0)) {
+            case 0 -> {
+                msgContext.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                languageCode,
+                                "hello_and_register_abort"
+                        )));
+                stepsEventStateContext.getStateMachine().stop();
+                msgContext.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
+            }
+            case 1 -> {
+                try {
+                    userBuilder.telegramId(msg.getChat().getId());
+                    sessTemplate.createUser(userBuilder.build());
+                    msgContext.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
+                            messageTextResolver.resolveTextById(
+                                    languageCode,
+                                    "hello_and_register_ok"
+                            )));
+                } catch (Exception e) {
+                    log.error("", e);
+                    msgContext.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
+                            messageTextResolver.resolveTextById(
+                                    languageCode,
+                                    "hello_and_register_error"
+                            )));
+                }
+                stepsEventStateContext.getStateMachine().stop();
+                msgContext.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
+            }
+            case 2 -> {
+                next(Event.NEXT, stepsEventStateContext);
+            }
+        }
+    }
+
+    private void responseSex(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var keyboardInfo = (Map<String, Sex>) stepsEventStateContext
+                .getStateMachine().getExtendedState()
+                .getVariables().get(KEYBOARD_INFO);
+        userBuilder.sex(keyboardInfo.get(msg.getText()));
+        next(Event.DATA, stepsEventStateContext);
+    }
+
+    private void requestSex(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        var languageCode = msg.getFrom().getLanguage_code();
+        var men = messageTextResolver.resolveTextById(languageCode, "sex_men");
+        var women = messageTextResolver.resolveTextById(languageCode, "sex_women");
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                languageCode,
+                                "hello_and_register_get_sex"
+                        ), TelegramMessageUtils.createKeyBoard(
+                                true,
+                                KeyboardButton.builder()
+                                        .text(men)
+                                        .build(),
+                                KeyboardButton.builder()
+                                        .text(women)
+                                        .build()))
+        );
+        stepsEventStateContext.getStateMachine().getExtendedState().getVariables().put(KEYBOARD_INFO,
+                Map.of(men, Sex.MALE, women, Sex.FEMALE));
+    }
+
+    private void requestEmail(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                msg.getFrom().getLanguage_code(),
+                                "hello_and_register_get_email"
+                        ))
+        );
+    }
+
+    private void requestName(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                msg.getFrom().getLanguage_code(),
+                                "hello_and_register_gen_name", msg.getFrom().getFirst_name()
+                        ))
+        );
+    }
+
+    private void requestBirthday(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                msg.getFrom().getLanguage_code(),
+                                "hello_and_register_get_birthday", msg.getFrom().getFirst_name()
+                        ))
+        );
+    }
+
+    private void requestCity(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        String languageCode = msg.getFrom().getLanguage_code();
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                languageCode,
+                                "hello_and_register_get_city"
+                        ), TelegramMessageUtils.createKeyBoard(true,
+                                KeyboardButton.builder().text(messageTextResolver.resolveTextById(
+                                        languageCode,
+                                        "hello_and_register_get_city_button"
+                                )).request_location(true).build())
+                ));
+    }
+
+    private void requestCheck(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        var languageCode = msg.getFrom().getLanguage_code();
+        var user = userBuilder.build();
+        var yes = messageTextResolver.resolveTextById(languageCode, "yes");
+        var no = messageTextResolver.resolveTextById(languageCode, "no");
+        var again = messageTextResolver.resolveTextById(languageCode, "again");
+        msgContext.getTelegramTemplate().sendMessage(
+                TelegramMessageUtils.createAnswer(msg,
+                        messageTextResolver.resolveTextById(
+                                msg.getFrom().getLanguage_code(),
+                                "hello_and_register_check",
+                                user.getNickname(),
+                                user.getEmail(),
+                                user.getCity().getAddress(),
+                                user.getSex().toString(),
+                                user.getBirthday().toString()
+                        ),
+                        TelegramMessageUtils.createKeyBoard(
+                                true,
+                                KeyboardButton.builder()
+                                        .text(yes)
+                                        .build(),
+                                KeyboardButton.builder()
+                                        .text(no)
+                                        .build(),
+                                KeyboardButton.builder()
+                                        .text(again)
+                                        .build()
+                        ))
+        );
+        stepsEventStateContext.getExtendedState().getVariables().put(KEYBOARD_INFO, Map.of(yes, 1, again, 2, no, 0));
+    }
+
     private enum Steps {
-        FIRST, NAME, EMAIL, SEX, BIRTHDAY, CITY, CHECK
+        FIRST, HELLO,
+        REQ_NAME, RES_NAME,
+        REQ_EMAIL, RES_EMAIL,
+        REQ_SEX, RES_SEX,
+        REQ_BIRTHDAY, RES_BIRTHDAY,
+        REQ_CITY, RES_CITY,
+        REQ_CHECK, RES_CHECK,
+    }
+
+    private enum Event {
+        DATA, NEXT
     }
 }
