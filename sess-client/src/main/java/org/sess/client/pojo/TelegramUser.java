@@ -13,6 +13,6 @@ public class TelegramUser {
     String email;
     City city;
     Sex sex;
-    LocalDateTime birthday;
+    int birthday;
     long telegramId;
 }

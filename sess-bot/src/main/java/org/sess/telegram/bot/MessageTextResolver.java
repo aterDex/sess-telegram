@@ -2,7 +2,7 @@ package org.sess.telegram.bot;
 
 public interface MessageTextResolver {
 
-    String resolveTextById(String locale, String textId);
+    String resolveTextById(String locale, MessageTextKey textId);
 
-    String resolveTextById(String locale, String textId, Object... param);
+    String resolveTextById(String locale, MessageTextKey textId, Object... param);
 }

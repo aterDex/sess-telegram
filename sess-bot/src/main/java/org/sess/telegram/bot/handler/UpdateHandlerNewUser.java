@@ -6,6 +6,7 @@ import org.sess.client.api.GeoResolver;
 import org.sess.client.api.SessTemplate;
 import org.sess.client.pojo.Sex;
 import org.sess.client.pojo.TelegramUser;
+import org.sess.telegram.bot.MessageTextKey;
 import org.sess.telegram.bot.MessageTextResolver;
 import org.sess.telegram.client.api.handler.MessageHandlerContext;
 import org.sess.telegram.client.api.handler.UpdateHandler;
@@ -135,7 +136,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                     TelegramMessageUtils.createAnswer(msg,
                             messageTextResolver.resolveTextById(
                                     msg.getFrom().getLanguage_code(),
-                                    "hello_and_register_get_email_again"))
+                                    MessageTextKey.HELLO_AND_REGISTER_GET_EMAIL_AGAIN))
             );
         }
         return check;
@@ -153,7 +154,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
-                                "hello_and_register", msg.getFrom().getFirst_name()
+                                MessageTextKey.HELLO_AND_REGISTER, msg.getFrom().getFirst_name()
                         ))
         );
         next(Event.NEXT, stepsEventStateContext);
@@ -173,7 +174,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
 
     private void responseBirthday(StateContext<Steps, Event> stepsEventStateContext) {
         var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
-        userBuilder.birthday(LocalDateTime.now());
+        userBuilder.birthday(Integer.parseInt(msg.getText()));
         next(Event.NEXT, stepsEventStateContext);
     }
 
@@ -200,7 +201,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                 msgContext.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 languageCode,
-                                "hello_and_register_abort"
+                                MessageTextKey.HELLO_AND_REGISTER_ABORT
                         )));
                 next(Event.NEXT, stepsEventStateContext);
             }
@@ -211,14 +212,14 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                     msgContext.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
                             messageTextResolver.resolveTextById(
                                     languageCode,
-                                    "hello_and_register_ok"
+                                    MessageTextKey.HELLO_AND_REGISTER_OK
                             )));
                 } catch (Exception e) {
                     log.error("", e);
                     msgContext.getTelegramTemplate().sendMessage(TelegramMessageUtils.createAnswer(msg,
                             messageTextResolver.resolveTextById(
                                     languageCode,
-                                    "hello_and_register_error"
+                                    MessageTextKey.HELLO_AND_REGISTER_ERROR
                             )));
                 }
                 next(Event.NEXT, stepsEventStateContext);
@@ -246,13 +247,13 @@ public class UpdateHandlerNewUser implements UpdateHandler {
         var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
         var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
         var languageCode = msg.getFrom().getLanguage_code();
-        var men = messageTextResolver.resolveTextById(languageCode, "sex_men");
-        var women = messageTextResolver.resolveTextById(languageCode, "sex_women");
+        var men = messageTextResolver.resolveTextById(languageCode, MessageTextKey.SEX_MEN);
+        var women = messageTextResolver.resolveTextById(languageCode, MessageTextKey.SEX_WOMEN);
         msgContext.getTelegramTemplate().sendMessage(
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 languageCode,
-                                "hello_and_register_get_sex"
+                                MessageTextKey.HELLO_AND_REGISTER_GET_SEX
                         ), TelegramMessageUtils.createOneRowReplyKeyBoardMarkup(
                                 true,
                                 KeyboardButton.builder()
@@ -273,7 +274,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
-                                "hello_and_register_get_email")));
+                                MessageTextKey.HELLO_AND_REGISTER_GET_EMAIL)));
     }
 
     private void requestName(StateContext<Steps, Event> stepsEventStateContext) {
@@ -283,7 +284,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
-                                "hello_and_register_gen_name", msg.getFrom().getFirst_name()
+                                MessageTextKey.HELLO_AND_REGISTER_GEN_NAME, msg.getFrom().getFirst_name()
                         ))
         );
     }
@@ -296,7 +297,7 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
-                                "hello_and_register_get_birthday", msg.getFrom().getFirst_name()
+                                MessageTextKey.HELLO_AND_REGISTER_GET_BIRTHDAY, msg.getFrom().getFirst_name()
                         ), TelegramMessageUtils.createOneColumnReplyKeyBoardMarkup(
                                 true,
                                 Stream.iterate(LocalDateTime.now().getYear() - 18, x -> x - 2).limit(82).map(x -> KeyboardButton.builder()
@@ -313,11 +314,11 @@ public class UpdateHandlerNewUser implements UpdateHandler {
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 languageCode,
-                                "hello_and_register_get_city"
+                                MessageTextKey.HELLO_AND_REGISTER_GET_CITY
                         ), TelegramMessageUtils.createOneRowReplyKeyBoardMarkup(true,
                                 KeyboardButton.builder().text(messageTextResolver.resolveTextById(
                                         languageCode,
-                                        "hello_and_register_get_city_button"
+                                        MessageTextKey.HELLO_AND_REGISTER_GET_CITY_BUTTON
                                 )).request_location(true).build())
                 ));
     }
@@ -327,19 +328,19 @@ public class UpdateHandlerNewUser implements UpdateHandler {
         var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
         var languageCode = msg.getFrom().getLanguage_code();
         var user = userBuilder.build();
-        var yes = messageTextResolver.resolveTextById(languageCode, "yes");
-        var no = messageTextResolver.resolveTextById(languageCode, "no");
-        var again = messageTextResolver.resolveTextById(languageCode, "again");
+        var yes = messageTextResolver.resolveTextById(languageCode, MessageTextKey.YES);
+        var no = messageTextResolver.resolveTextById(languageCode, MessageTextKey.NO);
+        var again = messageTextResolver.resolveTextById(languageCode, MessageTextKey.AGAIN);
         msgContext.getTelegramTemplate().sendMessage(
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
-                                "hello_and_register_check",
+                                MessageTextKey.HELLO_AND_REGISTER_CHECK,
                                 user.getNickname(),
                                 user.getEmail(),
                                 user.getCity().getAddress(),
                                 user.getSex().toString(),
-                                user.getBirthday().toString()
+                                String.valueOf(user.getBirthday())
                         ),
                         TelegramMessageUtils.createOneRowReplyKeyBoardMarkup(
                                 true,
