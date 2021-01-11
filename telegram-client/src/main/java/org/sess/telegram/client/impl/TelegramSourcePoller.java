@@ -5,6 +5,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.sess.telegram.client.api.TelegramSource;
 import org.sess.telegram.client.api.UriProvider;
+import org.sess.telegram.client.api.handler.UpdateHandlerStore;
 import org.sess.telegram.client.api.pojo.Update;
 import org.sess.telegram.client.api.pojo.UpdateRequest;
 import org.sess.telegram.client.api.pojo.UpdateResponse;
@@ -20,23 +21,24 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Component
 @Profile("TelegramSourcePoller")
-public class TelegramSourcePollerSpringEventPublisher implements TelegramSource {
+public class TelegramSourcePoller implements TelegramSource {
 
     private final RestTemplate botServer;
     private final UriProvider telegramUriProvider;
     private final ApplicationEventPublisher applicationEventPublisher;
-
+    private final UpdateHandlerStore updateHandlerStore;
     @Getter
     @Setter
     @Value("${telegram.bot.poller.timeout}")
     private int timeout;
 
-    public TelegramSourcePollerSpringEventPublisher(UriProvider telegramUriProvider,
-                                                    RestTemplate botServer,
-                                                    ApplicationEventPublisher applicationEventPublisher) {
+    public TelegramSourcePoller(UriProvider telegramUriProvider,
+                                RestTemplate botServer,
+                                ApplicationEventPublisher applicationEventPublisher, UpdateHandlerStore updateHandlerStore) {
         this.botServer = botServer;
         this.telegramUriProvider = telegramUriProvider;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.updateHandlerStore = updateHandlerStore;
     }
 
     @Async
@@ -59,9 +61,7 @@ public class TelegramSourcePollerSpringEventPublisher implements TelegramSource 
                 response.getBody().isOk() &&
                 response.getBody().getResult() != null) {
             var body = response.getBody();
-            body.getResult().stream()
-                    .map(x -> new MessageAsSpringEvent(this, x))
-                    .forEach(applicationEventPublisher::publishEvent);
+            body.getResult().forEach(updateHandlerStore::handler);
 
             return body.getResult().stream()
                     .map(Update::getUpdate_id)

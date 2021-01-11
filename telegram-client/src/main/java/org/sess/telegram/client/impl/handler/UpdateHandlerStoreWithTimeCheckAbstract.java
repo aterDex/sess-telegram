@@ -10,13 +10,13 @@ import org.sess.telegram.client.api.pojo.Update;
 import java.util.*;
 
 @Slf4j
-public abstract class UpdateHandlerStoreAbstract implements UpdateHandlerStore {
+public abstract class UpdateHandlerStoreWithTimeCheckAbstract implements UpdateHandlerStore {
 
     private final Map<Long, Deque<UpdateHandler>> store = new HashMap<>();
     private final UpdateHandler defaultUpdateHandler;
     private final TelegramTemplate telegramTemplate;
 
-    public UpdateHandlerStoreAbstract(UpdateHandler defaultUpdateHandler, TelegramTemplate telegramTemplate) {
+    public UpdateHandlerStoreWithTimeCheckAbstract(UpdateHandler defaultUpdateHandler, TelegramTemplate telegramTemplate) {
         this.defaultUpdateHandler = defaultUpdateHandler;
         this.telegramTemplate = telegramTemplate;
     }
@@ -37,7 +37,7 @@ public abstract class UpdateHandlerStoreAbstract implements UpdateHandlerStore {
 
     @Override
     public void handler(Update update) {
-        Iterator<UpdateHandler> iterator = getHandlerChain(update).descendingIterator();
+        Iterator<UpdateHandler> iterator = findHandlerChain(update).descendingIterator();
         while (iterator.hasNext()) {
             UpdateHandler updateHandler = iterator.next();
             if (updateHandler.handler(update,
@@ -47,7 +47,7 @@ public abstract class UpdateHandlerStoreAbstract implements UpdateHandlerStore {
         }
     }
 
-    private Deque<UpdateHandler> getHandlerChain(Update update) {
+    private Deque<UpdateHandler> findHandlerChain(Update update) {
         if (update.getMessage() == null) {
             throw new UnsupportedOperationException("Now it unsupported for not message update");
         }

@@ -5,11 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication(scanBasePackageClasses = {
-        App.class,
-        org.sess.telegram.client.Marker.class,
-        org.sess.client.Marker.class
-})
+@SpringBootApplication(scanBasePackages = {"org.sess.telegram.bot", "org.sess.telegram.client", "org.sess.client"})
 @EnableAsync
 @EnableFeignClients
 public class App {

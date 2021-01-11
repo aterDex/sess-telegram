@@ -1,6 +1,7 @@
 package org.sess.telegram.bot.handler;
 
 import org.sess.client.api.SessTemplate;
+import org.sess.telegram.bot.MessageTextKey;
 import org.sess.telegram.bot.MessageTextResolver;
 import org.sess.telegram.client.api.handler.MessageHandlerContext;
 import org.sess.telegram.client.api.handler.UpdateHandler;
@@ -27,7 +28,7 @@ public class UpdateHandlerRootSess implements UpdateHandler {
             if (sessTemplate.isRegisterUser(update.getMessage().getChat().getId())) {
                 context.getTelegramTemplate().sendMessage(
                         TelegramMessageUtils.createAnswer(update.getMessage(),
-                                messageTextResolver.resolveTextById(update.getMessage().getFrom().getLanguage_code(), "in_progress"))
+                                messageTextResolver.resolveTextById(update.getMessage().getFrom().getLanguage_code(), MessageTextKey.IN_PROGRESS))
                 );
             } else {
                 context.getUpdateHandlerStore().addLastHandler(update.getMessage().getChat().getId(), context.getUpdateHandlerStore().getMessageHandler("updateHandlerNewUser"));

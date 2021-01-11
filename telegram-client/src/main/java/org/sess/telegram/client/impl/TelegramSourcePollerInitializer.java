@@ -11,14 +11,14 @@ import javax.annotation.PostConstruct;
 @Profile("TelegramSourcePoller")
 public class TelegramSourcePollerInitializer {
 
-    private final TelegramSourcePollerSpringEventPublisher telegramSourcePollerSpringEventPublisher;
+    private final TelegramSourcePoller telegramSourcePoller;
 
-    public TelegramSourcePollerInitializer(TelegramSourcePollerSpringEventPublisher telegramSourcePollerSpringEventPublisher) {
-        this.telegramSourcePollerSpringEventPublisher = telegramSourcePollerSpringEventPublisher;
+    public TelegramSourcePollerInitializer(TelegramSourcePoller telegramSourcePoller) {
+        this.telegramSourcePoller = telegramSourcePoller;
     }
 
     @PostConstruct
     public void startPoller() {
-        telegramSourcePollerSpringEventPublisher.startAndWait();
+        telegramSourcePoller.startAndWait();
     }
 }

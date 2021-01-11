@@ -17,7 +17,7 @@ public class MessageTextResolverRus implements MessageTextResolver {
         dictionary = ofEntries(entry(IN_PROGRESS, "Функционал в процессе разработки.")
                 , entry(HELLO_AND_REGISTER, "Привет %1$s! Я бот sess. И я помогу найти тебе компанию для пробежки. Но в начале давай зарегистрируем тебя.")
                 , entry(HELLO_AND_REGISTER_GEN_NAME, "Скажи как нам к тебе обращаться в дальнейшем?")
-                , entry(HELLO_AND_REGISTER_GET_EMAIL, "А сейчас напиши свой Email, чтобы стать ближе)")
+                , entry(HELLO_AND_REGISTER_GET_EMAIL, "А сейчас напиши свой Email")
                 , entry(HELLO_AND_REGISTER_GET_EMAIL_AGAIN, "Email не верный, попробуй ввести его еще раз")
                 , entry(HELLO_AND_REGISTER_GET_SEX, "Скажи какого ты пола?")
                 , entry(HELLO_AND_REGISTER_GET_BIRTHDAY, "Год рождения?")
