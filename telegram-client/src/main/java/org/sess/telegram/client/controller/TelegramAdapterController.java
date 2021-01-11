@@ -24,7 +24,7 @@ public class TelegramAdapterController {
         if (telegramTemplate.check()) {
             return ResponseEntity.ok("");
         } else {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("");
         }
     }
 }

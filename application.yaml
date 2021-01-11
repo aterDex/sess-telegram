@@ -12,6 +12,9 @@ telegram:
     template: https://api.telegram.org/bot{botId}/{method}
     poller:
       timeout: 30
+    session:
+      period: 15000
+      timeout: 30000
 
 geo:
   nominatim:
