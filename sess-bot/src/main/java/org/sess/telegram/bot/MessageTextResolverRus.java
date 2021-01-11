@@ -32,6 +32,7 @@ public class MessageTextResolverRus implements MessageTextResolver {
                 , entry(HELLO_AND_REGISTER_OK, "Вы зарегистрированы")
                 , entry(HELLO_AND_REGISTER_ERROR, "Ошибка при регистрации")
                 , entry(HELLO_AND_REGISTER_ABORT, "Регистрация отменена")
+                , entry(UNKNOWN_COMMAND, "Неизвестная команда, попробуй /help")
         );
     }
 
