@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.StateMachine;
-import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.StateMachineBuilder;
 import org.springframework.stereotype.Component;
 
@@ -66,48 +65,53 @@ public class MessageHandlerNewUser implements MessageHandler {
         builder.configureStates()
                 .withStates()
                 .initial(Steps.FIRST)
+                .end(Steps.CLOSE)
+                .state(Steps.HELLO, this::hello)
+
+                .state(Steps.REQ_NAME, this::requestName)
+                .state(Steps.RES_NAME, this::responseName)
+
+                .state(Steps.REQ_EMAIL, this::requestEmail)
+                .state(Steps.RES_EMAIL, this::responseEmail)
+
+                .state(Steps.REQ_SEX, this::requestSex)
+                .state(Steps.RES_SEX, this::responseSex)
+
+                .state(Steps.REQ_BIRTHDAY, this::requestBirthday)
+                .state(Steps.RES_BIRTHDAY, this::responseBirthday)
+
+                .state(Steps.REQ_CITY, this::requestCity)
+                .state(Steps.RES_CITY, this::responseCity)
+
+                .state(Steps.REQ_CHECK, this::requestCheck)
+                .state(Steps.RES_CHECK, this::responseCheck)
+
+                .state(Steps.CLOSE, this::close)
                 .states(EnumSet.allOf(Steps.class));
+
         builder.configureTransitions()
-                .withExternal().source(Steps.FIRST).target(Steps.HELLO).event(Event.DATA)
-                .action(this::hello).and()
+                .withExternal().source(Steps.FIRST).target(Steps.HELLO).event(Event.DATA).and()
 
-                .withExternal().source(Steps.HELLO).target(Steps.REQ_NAME).event(Event.NEXT)
-                .action(this::requestName).and()
-                .withExternal().source(Steps.REQ_NAME).target(Steps.RES_NAME).event(Event.DATA)
-                .action(this::responseName).and()
+                .withExternal().source(Steps.HELLO).target(Steps.REQ_NAME).event(Event.NEXT).and()
+                .withExternal().source(Steps.REQ_NAME).target(Steps.RES_NAME).event(Event.DATA).and()
 
-                .withExternal().source(Steps.RES_NAME).target(Steps.REQ_EMAIL).event(Event.NEXT)
-                .action(this::requestEmail).and()
-                .withExternal().source(Steps.REQ_EMAIL).target(Steps.RES_EMAIL).event(Event.DATA)
-                .action(this::responseEmail).and()
+                .withExternal().source(Steps.RES_NAME).target(Steps.REQ_EMAIL).event(Event.NEXT).and()
+                .withExternal().source(Steps.REQ_EMAIL).target(Steps.RES_EMAIL).event(Event.DATA).and()
 
-                .withExternal().source(Steps.RES_EMAIL).target(Steps.REQ_SEX).event(Event.NEXT)
-                .action(this::requestSex).and()
-                .withExternal().source(Steps.REQ_SEX).target(Steps.RES_SEX).event(Event.DATA)
-                .action(this::responseSex).and()
+                .withExternal().source(Steps.RES_EMAIL).target(Steps.REQ_SEX).event(Event.NEXT).and()
+                .withExternal().source(Steps.REQ_SEX).target(Steps.RES_SEX).event(Event.DATA).and()
 
-                .withExternal().source(Steps.RES_SEX).target(Steps.REQ_BIRTHDAY).event(Event.NEXT)
-                .action(this::requestBirthday).and()
-                .withExternal().source(Steps.REQ_BIRTHDAY).target(Steps.RES_BIRTHDAY).event(Event.DATA)
-                .action(this::responseBirthday).and()
+                .withExternal().source(Steps.RES_SEX).target(Steps.REQ_BIRTHDAY).event(Event.NEXT).and()
+                .withExternal().source(Steps.REQ_BIRTHDAY).target(Steps.RES_BIRTHDAY).event(Event.DATA).and()
 
-                .withExternal().source(Steps.RES_BIRTHDAY).target(Steps.REQ_CITY).event(Event.NEXT)
-                .action(this::requestCity).and()
-                .withExternal().source(Steps.REQ_CITY).target(Steps.RES_CITY).event(Event.DATA)
-                .action(this::responseCity).and()
+                .withExternal().source(Steps.RES_BIRTHDAY).target(Steps.REQ_CITY).event(Event.NEXT).and()
+                .withExternal().source(Steps.REQ_CITY).target(Steps.RES_CITY).event(Event.DATA).and()
 
-                .withExternal().source(Steps.RES_CITY).target(Steps.REQ_CHECK).event(Event.NEXT)
-                .action(this::requestCheck).and()
-                .withExternal().source(Steps.REQ_CHECK).target(Steps.RES_CHECK).event(Event.DATA)
-                .action(this::responseCheck).and()
+                .withExternal().source(Steps.RES_CITY).target(Steps.REQ_CHECK).event(Event.NEXT).and()
+                .withExternal().source(Steps.REQ_CHECK).target(Steps.RES_CHECK).event(Event.DATA).and()
 
-                .withExternal().source(Steps.REQ_CHECK).target(Steps.REQ_NAME).event(Event.NEXT)
-                .action(new Action<Steps, Event>() {
-                    @Override
-                    public void execute(StateContext<Steps, Event> context) {
-                        log.info("----------------------------");
-                    }
-                }).and()
+                .withExternal().source(Steps.RES_CHECK).target(Steps.REQ_NAME).event(Event.AGAIN).and()
+                .withExternal().source(Steps.RES_CHECK).target(Steps.CLOSE).event(Event.NEXT).and()
         ;
         return builder.build();
     }
@@ -173,8 +177,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                                 languageCode,
                                 "hello_and_register_abort"
                         )));
-                stepsEventStateContext.getStateMachine().stop();
-                msgContext.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
+                next(Event.NEXT, stepsEventStateContext);
             }
             case 1 -> {
                 try {
@@ -193,13 +196,16 @@ public class MessageHandlerNewUser implements MessageHandler {
                                     "hello_and_register_error"
                             )));
                 }
-                stepsEventStateContext.getStateMachine().stop();
-                msgContext.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
-            }
-            case 2 -> {
                 next(Event.NEXT, stepsEventStateContext);
             }
+            case 2 -> next(Event.AGAIN, stepsEventStateContext);
         }
+    }
+
+    private void close(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        msgContext.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
     }
 
     private void responseSex(StateContext<Steps, Event> stepsEventStateContext) {
@@ -208,7 +214,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                 .getStateMachine().getExtendedState()
                 .getVariables().get(KEYBOARD_INFO);
         userBuilder.sex(keyboardInfo.get(msg.getText()));
-        next(Event.DATA, stepsEventStateContext);
+        next(Event.NEXT, stepsEventStateContext);
     }
 
     private void requestSex(StateContext<Steps, Event> stepsEventStateContext) {
@@ -330,10 +336,10 @@ public class MessageHandlerNewUser implements MessageHandler {
         REQ_SEX, RES_SEX,
         REQ_BIRTHDAY, RES_BIRTHDAY,
         REQ_CITY, RES_CITY,
-        REQ_CHECK, RES_CHECK,
+        REQ_CHECK, RES_CHECK, CLOSE
     }
 
     private enum Event {
-        DATA, NEXT
+        DATA, NEXT, AGAIN
     }
 }
