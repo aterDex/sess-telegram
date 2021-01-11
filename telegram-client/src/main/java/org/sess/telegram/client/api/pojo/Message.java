@@ -3,7 +3,7 @@ package org.sess.telegram.client.api.pojo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import org.apache.tomcat.jni.Poll;
-import org.sess.telegram.client.api.helper.UnixDataToLocalDateTimeDeserializer;
+import org.sess.telegram.client.json.UnixDataToLocalDateTimeDeserializer;
 
 import java.time.ZonedDateTime;
 import java.util.List;
