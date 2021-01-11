@@ -14,6 +14,7 @@ public class MessageTextResolverRus implements MessageTextResolver {
                 , entry("hello_and_register", "Привет %1$s! Я бот sess. И я помогу найти тебе компанию для пробежки. Но в начале давай зарегистрируем тебя.")
                 , entry("hello_and_register_gen_name", "Скажи как нам к тебе обращаться в дальнейшем?")
                 , entry("hello_and_register_get_email", "А сейчас напиши свой Email, чтобы стать ближе)")
+                , entry("hello_and_register_get_email_again", "Email не верный, попробуй ввести его еще раз")
                 , entry("hello_and_register_get_sex", "Скажи какого ты пола?")
                 , entry("hello_and_register_get_birthday", "Дата рождения? (Мы некому не скажем)")
                 , entry("hello_and_register_get_city", "Город в котором ты хочешь бегать?")

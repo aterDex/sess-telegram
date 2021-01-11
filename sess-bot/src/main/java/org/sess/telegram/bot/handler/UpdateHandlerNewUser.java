@@ -1,15 +1,18 @@
 package org.sess.telegram.bot.handler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.sess.client.api.GeoResolver;
-import org.sess.telegram.bot.MessageTextResolver;
 import org.sess.client.api.SessTemplate;
 import org.sess.client.pojo.Sex;
 import org.sess.client.pojo.TelegramUser;
-import org.sess.telegram.client.api.handler.MessageHandler;
+import org.sess.telegram.bot.MessageTextResolver;
 import org.sess.telegram.client.api.handler.MessageHandlerContext;
+import org.sess.telegram.client.api.handler.UpdateHandler;
+import org.sess.telegram.client.api.pojo.InlineKeyboardButton;
 import org.sess.telegram.client.api.pojo.KeyboardButton;
 import org.sess.telegram.client.api.pojo.Message;
+import org.sess.telegram.client.api.pojo.Update;
 import org.sess.telegram.client.impl.TelegramMessageUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -23,15 +26,16 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-@Qualifier("messageHandlerNewUser")
-public class MessageHandlerNewUser implements MessageHandler {
+@Qualifier("updateHandlerNewUser")
+public class UpdateHandlerNewUser implements UpdateHandler {
 
     public static final String KEYBOARD_INFO = "KeyboardInfo";
-    public static final String MSG = "msg";
+    public static final String MSG = "update";
     public static final String MHC = "mhc";
 
     private final SessTemplate sessTemplate;
@@ -40,7 +44,7 @@ public class MessageHandlerNewUser implements MessageHandler {
     private final GeoResolver geoResolver;
     private final StateMachine<Steps, Event> stateMachine;
 
-    public MessageHandlerNewUser(SessTemplate sessTemplate, MessageTextResolver messageTextResolver, GeoResolver geoResolver) throws Exception {
+    public UpdateHandlerNewUser(SessTemplate sessTemplate, MessageTextResolver messageTextResolver, GeoResolver geoResolver) throws Exception {
         this.sessTemplate = sessTemplate;
         this.messageTextResolver = messageTextResolver;
         this.geoResolver = geoResolver;
@@ -49,17 +53,20 @@ public class MessageHandlerNewUser implements MessageHandler {
     }
 
     @Override
-    public boolean handler(Message msg, MessageHandlerContext context) {
-        try {
-            stateMachine.sendEvent(MessageBuilder
-                    .withPayload(Event.DATA)
-                    .setHeader(MSG, msg)
-                    .setHeader(MHC, context)
-                    .build());
-        } catch (Exception e) {
-            log.error("", e);
+    public boolean handler(Update update, MessageHandlerContext context) {
+        if (update.getMessage() != null) {
+            try {
+                stateMachine.sendEvent(MessageBuilder
+                        .withPayload(Event.DATA)
+                        .setHeader(MSG, update.getMessage())
+                        .setHeader(MHC, context)
+                        .build());
+            } catch (Exception e) {
+                log.error("", e);
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     private StateMachine<Steps, Event> buildMachine() throws Exception {
@@ -99,7 +106,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                 .withExternal().source(Steps.REQ_NAME).target(Steps.RES_NAME).event(Event.DATA).and()
 
                 .withExternal().source(Steps.RES_NAME).target(Steps.REQ_EMAIL).event(Event.NEXT).and()
-                .withExternal().source(Steps.REQ_EMAIL).target(Steps.RES_EMAIL).event(Event.DATA).and()
+                .withExternal().source(Steps.REQ_EMAIL).target(Steps.RES_EMAIL).event(Event.DATA).guard(this::checkEmail).and()
 
                 .withExternal().source(Steps.RES_EMAIL).target(Steps.REQ_SEX).event(Event.NEXT).and()
                 .withExternal().source(Steps.REQ_SEX).target(Steps.RES_SEX).event(Event.DATA).and()
@@ -117,6 +124,21 @@ public class MessageHandlerNewUser implements MessageHandler {
                 .withExternal().source(Steps.RES_CHECK).target(Steps.CLOSE).event(Event.NEXT).and()
         ;
         return builder.build();
+    }
+
+    private boolean checkEmail(StateContext<Steps, Event> stepsEventStateContext) {
+        var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
+        var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        var check = EmailValidator.getInstance().isValid(msg.getText());
+        if (!check) {
+            msgContext.getTelegramTemplate().sendMessage(
+                    TelegramMessageUtils.createAnswer(msg,
+                            messageTextResolver.resolveTextById(
+                                    msg.getFrom().getLanguage_code(),
+                                    "hello_and_register_get_email_again"))
+            );
+        }
+        return check;
     }
 
     private void next(Event event, StateContext<Steps, Event> stepsEventStateContext) {
@@ -208,7 +230,7 @@ public class MessageHandlerNewUser implements MessageHandler {
     private void close(StateContext<Steps, Event> stepsEventStateContext) {
         var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
         var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
-        msgContext.getMessageHandlerStore().removeLastHandler(msg.getChat().getId());
+        msgContext.getUpdateHandlerStore().removeLastHandler(msg.getChat().getId());
     }
 
     private void responseSex(StateContext<Steps, Event> stepsEventStateContext) {
@@ -231,7 +253,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                         messageTextResolver.resolveTextById(
                                 languageCode,
                                 "hello_and_register_get_sex"
-                        ), TelegramMessageUtils.createKeyBoard(
+                        ), TelegramMessageUtils.createOneRowReplyKeyBoardMarkup(
                                 true,
                                 KeyboardButton.builder()
                                         .text(men)
@@ -251,9 +273,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
-                                "hello_and_register_get_email"
-                        ))
-        );
+                                "hello_and_register_get_email")));
     }
 
     private void requestName(StateContext<Steps, Event> stepsEventStateContext) {
@@ -271,13 +291,18 @@ public class MessageHandlerNewUser implements MessageHandler {
     private void requestBirthday(StateContext<Steps, Event> stepsEventStateContext) {
         var msg = stepsEventStateContext.getMessageHeaders().get(MSG, Message.class);
         var msgContext = stepsEventStateContext.getMessageHeaders().get(MHC, MessageHandlerContext.class);
+        InlineKeyboardButton bl = InlineKeyboardButton.builder().text("тест").callback_data("R").build();
         msgContext.getTelegramTemplate().sendMessage(
                 TelegramMessageUtils.createAnswer(msg,
                         messageTextResolver.resolveTextById(
                                 msg.getFrom().getLanguage_code(),
                                 "hello_and_register_get_birthday", msg.getFrom().getFirst_name()
-                        ))
-        );
+                        ), TelegramMessageUtils.createOneColumnReplyKeyBoardMarkup(
+                                true,
+                                Stream.iterate(LocalDateTime.now().getYear() - 18, x -> x - 2).limit(82).map(x -> KeyboardButton.builder()
+                                        .text(String.valueOf(x))
+                                        .build()).toArray(KeyboardButton[]::new))
+                ));
     }
 
     private void requestCity(StateContext<Steps, Event> stepsEventStateContext) {
@@ -289,7 +314,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                         messageTextResolver.resolveTextById(
                                 languageCode,
                                 "hello_and_register_get_city"
-                        ), TelegramMessageUtils.createKeyBoard(true,
+                        ), TelegramMessageUtils.createOneRowReplyKeyBoardMarkup(true,
                                 KeyboardButton.builder().text(messageTextResolver.resolveTextById(
                                         languageCode,
                                         "hello_and_register_get_city_button"
@@ -316,7 +341,7 @@ public class MessageHandlerNewUser implements MessageHandler {
                                 user.getSex().toString(),
                                 user.getBirthday().toString()
                         ),
-                        TelegramMessageUtils.createKeyBoard(
+                        TelegramMessageUtils.createOneRowReplyKeyBoardMarkup(
                                 true,
                                 KeyboardButton.builder()
                                         .text(yes)
