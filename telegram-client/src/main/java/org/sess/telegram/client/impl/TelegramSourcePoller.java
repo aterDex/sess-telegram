@@ -1,7 +1,5 @@
 package org.sess.telegram.client.impl;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.sess.telegram.client.api.TelegramSource;
 import org.sess.telegram.client.api.UriProvider;
@@ -10,8 +8,7 @@ import org.sess.telegram.client.api.pojo.Update;
 import org.sess.telegram.client.api.pojo.UpdateRequest;
 import org.sess.telegram.client.api.pojo.UpdateResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -20,25 +17,24 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component
-@Profile("TelegramSourcePoller")
+@ConditionalOnProperty(
+        value = "telegram.bot.poller.timeout",
+        matchIfMissing = false)
 public class TelegramSourcePoller implements TelegramSource {
 
     private final RestTemplate botServer;
     private final UriProvider telegramUriProvider;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final UpdateHandlerStore updateHandlerStore;
-    @Getter
-    @Setter
-    @Value("${telegram.bot.poller.timeout}")
-    private int timeout;
+    private final int timeout;
 
     public TelegramSourcePoller(UriProvider telegramUriProvider,
                                 RestTemplate botServer,
-                                ApplicationEventPublisher applicationEventPublisher, UpdateHandlerStore updateHandlerStore) {
+                                UpdateHandlerStore updateHandlerStore,
+                                @Value("${telegram.bot.poller.timeout}") int timeout) {
         this.botServer = botServer;
         this.telegramUriProvider = telegramUriProvider;
-        this.applicationEventPublisher = applicationEventPublisher;
         this.updateHandlerStore = updateHandlerStore;
+        this.timeout = timeout;
     }
 
     @Async

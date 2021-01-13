@@ -34,7 +34,7 @@ public class GeoResolverNominatim implements GeoResolver {
         } else {
             headers.set("Accept-Language", langCode);
         }
-        var entity = new HttpEntity(headers);
+        var entity = new HttpEntity<Void>(headers);
         var response = restTemplate.exchange(UriComponentsBuilder
                 .fromUriString(nominatim)
                 .path("/reverse")

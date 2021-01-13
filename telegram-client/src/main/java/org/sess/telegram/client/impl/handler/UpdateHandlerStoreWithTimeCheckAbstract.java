@@ -1,7 +1,5 @@
 package org.sess.telegram.client.impl.handler;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.sess.telegram.client.api.TelegramTemplate;
 import org.sess.telegram.client.api.handler.MessageHandlerContext;
@@ -26,15 +24,13 @@ public abstract class UpdateHandlerStoreWithTimeCheckAbstract implements UpdateH
     private final TelegramTemplate telegramTemplate;
     private final Deque<UpdateHandler> defaultUpdateHandlerDeque;
 
-    @Getter
-    @Setter
-    @Value("${telegram.bot.session.timeout}")
-    private int timeoutSession;
+    private final int timeoutSession;
 
-    public UpdateHandlerStoreWithTimeCheckAbstract(UpdateHandler defaultUpdateHandler, TelegramTemplate telegramTemplate) {
+    public UpdateHandlerStoreWithTimeCheckAbstract(UpdateHandler defaultUpdateHandler, TelegramTemplate telegramTemplate, int timeoutSession) {
         this.defaultUpdateHandler = defaultUpdateHandler;
         this.telegramTemplate = telegramTemplate;
         this.defaultUpdateHandlerDeque = new ArrayDeque<>(Collections.singletonList(defaultUpdateHandler));
+        this.timeoutSession = timeoutSession;
     }
 
     @Override

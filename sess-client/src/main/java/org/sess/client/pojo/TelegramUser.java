@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 @Builder
 public class TelegramUser {
 
-    String nickname;
-    String email;
-    City city;
-    Sex sex;
-    int birthday;
-    long telegramId;
+    private String nickname;
+    private String email;
+    private City city;
+    private Sex sex;
+    private int birthday;
+    private long telegramId;
 }
