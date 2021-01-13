@@ -13,8 +13,8 @@ telegram:
     poller:
       timeout: 30
     session:
-      period: 15000
-      timeout: 30000
+      period: 150000
+      timeout: 300000
 
 geo:
   nominatim:
