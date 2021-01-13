@@ -7,5 +7,6 @@ import org.sess.telegram.client.api.TelegramTemplate;
 public class MessageHandlerContext {
 
     TelegramTemplate telegramTemplate;
+    UpdateHandlerFactoryStore updateHandlerFactoryStore;
     UpdateHandlerStore updateHandlerStore;
 }

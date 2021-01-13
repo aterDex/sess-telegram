@@ -8,7 +8,5 @@ public interface UpdateHandlerStore {
 
     void removeLastHandler(long chatId);
 
-    UpdateHandler getMessageHandler(String name);
-
     void handler(Update msg);
 }

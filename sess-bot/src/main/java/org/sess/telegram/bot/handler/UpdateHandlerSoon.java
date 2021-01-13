@@ -13,8 +13,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
-@Qualifier("updateHandlerSoon")
 public class UpdateHandlerSoon implements UpdateHandler {
 
     private final MessageTextResolver messageTextResolver;

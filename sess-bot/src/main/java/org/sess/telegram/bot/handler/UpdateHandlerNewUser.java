@@ -1,5 +1,6 @@
 package org.sess.telegram.bot.handler;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.sess.client.api.GeoResolver;
@@ -15,14 +16,10 @@ import org.sess.telegram.client.api.pojo.KeyboardButton;
 import org.sess.telegram.client.api.pojo.Message;
 import org.sess.telegram.client.api.pojo.Update;
 import org.sess.telegram.client.impl.TelegramMessageUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineBuilder;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -30,9 +27,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 @Slf4j
-@Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-@Qualifier("updateHandlerNewUser")
 public class UpdateHandlerNewUser implements UpdateHandler {
 
     public static final String KEYBOARD_INFO = "KeyboardInfo";
@@ -45,7 +39,8 @@ public class UpdateHandlerNewUser implements UpdateHandler {
     private final GeoResolver geoResolver;
     private final StateMachine<Steps, Event> stateMachine;
 
-    public UpdateHandlerNewUser(SessTemplate sessTemplate, MessageTextResolver messageTextResolver, GeoResolver geoResolver) throws Exception {
+    @SneakyThrows
+    public UpdateHandlerNewUser(SessTemplate sessTemplate, MessageTextResolver messageTextResolver, GeoResolver geoResolver) {
         this.sessTemplate = sessTemplate;
         this.messageTextResolver = messageTextResolver;
         this.geoResolver = geoResolver;

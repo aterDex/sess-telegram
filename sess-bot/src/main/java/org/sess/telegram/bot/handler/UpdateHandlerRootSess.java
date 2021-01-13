@@ -42,7 +42,7 @@ public class UpdateHandlerRootSess implements UpdateHandler {
             );
         } else {
             context.getUpdateHandlerStore().addLastHandler(update.getMessage().getChat().getId(),
-                    context.getUpdateHandlerStore().getMessageHandler(handlerName));
+                    context.getUpdateHandlerFactoryStore().getHandler(handlerName));
             context.getUpdateHandlerStore().handler(update);
         }
         return true;
@@ -50,7 +50,7 @@ public class UpdateHandlerRootSess implements UpdateHandler {
 
     private boolean handlerNewUser(Update update, MessageHandlerContext context) {
         context.getUpdateHandlerStore().addLastHandler(update.getMessage().getChat().getId(),
-                context.getUpdateHandlerStore().getMessageHandler("updateHandlerNewUser"));
+                context.getUpdateHandlerFactoryStore().getHandler("updateHandlerNewUser"));
         context.getUpdateHandlerStore().handler(update);
         return true;
     }

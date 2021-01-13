@@ -4,9 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.sess.telegram.client.api.TelegramTemplate;
 import org.sess.telegram.client.api.handler.MessageHandlerContext;
 import org.sess.telegram.client.api.handler.UpdateHandler;
+import org.sess.telegram.client.api.handler.UpdateHandlerFactoryStore;
 import org.sess.telegram.client.api.handler.UpdateHandlerStore;
 import org.sess.telegram.client.api.pojo.Update;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-public abstract class UpdateHandlerStoreWithTimeCheckAbstract implements UpdateHandlerStore {
+public class UpdateHandlerStoreWithTimeCheck implements UpdateHandlerStore {
 
     private final Map<Long, Deque<UpdateHandler>> store = new ConcurrentHashMap<>();
     private final Map<Long, LocalDateTime> lastWork = new ConcurrentHashMap<>();
@@ -23,14 +23,19 @@ public abstract class UpdateHandlerStoreWithTimeCheckAbstract implements UpdateH
     private final UpdateHandler defaultUpdateHandler;
     private final TelegramTemplate telegramTemplate;
     private final Deque<UpdateHandler> defaultUpdateHandlerDeque;
+    private final UpdateHandlerFactoryStore updateHandlerFactoryStore;
 
     private final int timeoutSession;
 
-    public UpdateHandlerStoreWithTimeCheckAbstract(UpdateHandler defaultUpdateHandler, TelegramTemplate telegramTemplate, int timeoutSession) {
+    public UpdateHandlerStoreWithTimeCheck(UpdateHandler defaultUpdateHandler,
+                                           TelegramTemplate telegramTemplate,
+                                           UpdateHandlerFactoryStore updateHandlerFactoryStore,
+                                           int timeoutSession) {
         this.defaultUpdateHandler = defaultUpdateHandler;
         this.telegramTemplate = telegramTemplate;
-        this.defaultUpdateHandlerDeque = new ArrayDeque<>(Collections.singletonList(defaultUpdateHandler));
+        this.updateHandlerFactoryStore = updateHandlerFactoryStore;
         this.timeoutSession = timeoutSession;
+        this.defaultUpdateHandlerDeque = new ArrayDeque<>(Collections.singletonList(defaultUpdateHandler));
     }
 
     @Override
@@ -53,7 +58,7 @@ public abstract class UpdateHandlerStoreWithTimeCheckAbstract implements UpdateH
         while (iterator.hasNext()) {
             UpdateHandler updateHandler = iterator.next();
             if (updateHandler.handler(update,
-                    new MessageHandlerContext(telegramTemplate, this))) {
+                    new MessageHandlerContext(telegramTemplate, updateHandlerFactoryStore, this))) {
                 break;
             }
         }
