@@ -51,8 +51,7 @@ public class UpdateHandlerStoreConfig {
     }
 
     @Bean
-    public UpdateHandlerStore messageHandlerStore(ApplicationContext applicationContext,
-                                                  @Qualifier("defaultUpdateHandler") UpdateHandler defaultUpdateHandler,
+    public UpdateHandlerStore messageHandlerStore(@Qualifier("defaultUpdateHandler") UpdateHandler defaultUpdateHandler,
                                                   TelegramTemplate telegramTemplate,
                                                   UpdateHandlerFactoryStore factoryStore) {
         return new UpdateHandlerStoreWithTimeCheck(defaultUpdateHandler, telegramTemplate, factoryStore, timeoutSession);
