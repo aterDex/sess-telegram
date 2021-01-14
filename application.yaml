@@ -1,0 +1,24 @@
+---
+server:
+  port: 18200
+
+spring:
+  profiles:
+    active: WithMockSessServices
+
+telegram:
+  bot:
+    id:
+    template: https://api.telegram.org/bot{botId}/{method}
+    poller:
+      timeout: 30
+    session:
+      period: 150000
+      timeout: 300000
+
+geo:
+  nominatim:
+    url: https://nominatim.openstreetmap.org
+
+logging:
+  config: logback.xml

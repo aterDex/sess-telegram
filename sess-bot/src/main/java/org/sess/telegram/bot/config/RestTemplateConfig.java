@@ -1,14 +1,14 @@
-package org.sess.telegram.client.config;
+package org.sess.telegram.bot.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class BotServerConfig {
+public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate botServer() {
+    public RestTemplate restTemplate() {
         return new RestTemplate();
     }
 }

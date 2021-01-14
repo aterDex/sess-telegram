@@ -30,6 +30,9 @@
     <logger name="org.springframework.web.client" level="TRACE" additivity="false">
         <appender-ref ref="HTTP_TELEGRAM_FILE"/>
     </logger>
+    <logger name="org.springframework.statemachine" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
     <logger name="org.sess.telegram.client" level="DEBUG" additivity="true"/>
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
